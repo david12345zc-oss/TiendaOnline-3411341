@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "TiendaOnline (API + WASM)",
+    "Projects": [
+      {
+        "Path": "TiendaOnline.API\\TiendaOnline.API.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "TiendaOnline.WASM\\TiendaOnline.WASM.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      }
+    ]
+  }
+]

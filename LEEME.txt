@@ -1,0 +1,138 @@
+========================================================================
+TIENDAONLINE - Web API + Blazor WebAssembly
+CRUD completo de la entidad Clientes
+========================================================================
+
+CONTENIDO DE LA SOLUCION
+------------------------------------------------------------------------
+TiendaOnline.sln
+  |
+  +-- TiendaOnline.API .... Parte 1: Web API con Entity Framework Core
+  |                         y SQL Server. Expone el CRUD de Clientes.
+  |
+  +-- TiendaOnline.WASM ... Parte 2: front-end Blazor WebAssembly que
+                            consume la API mediante HttpClient.
+
+
+COMO EJECUTAR
+------------------------------------------------------------------------
+1. Abrir TiendaOnline.sln con Visual Studio (se requiere Visual Studio
+   2026, ver la nota sobre .NET 10 mas abajo).
+
+2. Esperar a que Visual Studio restaure los paquetes NuGet. Compilar
+   con Ctrl+Shift+B.
+
+3. Crear la base de datos en la maquina donde se va a ejecutar. La
+   migracion ya esta incluida en el proyecto, solo hay que aplicarla:
+
+       Herramientas
+         -> Administrador de paquetes NuGet
+           -> Consola del Administrador de paquetes
+
+   Con TiendaOnline.API como proyecto predeterminado, ejecutar:
+
+       Update-Database
+
+   Esto crea la base TiendaOnlineDb con la tabla Clientes.
+
+4. Configurar el arranque conjunto de los dos proyectos:
+
+       Clic derecho sobre la solucion TiendaOnline
+         -> Configurar proyectos de inicio...
+           -> Varios proyectos de inicio
+             -> Accion = Inicio para TiendaOnline.API
+             -> Accion = Inicio para TiendaOnline.WASM
+
+   (La solucion ya incluye un perfil .slnLaunch con esta configuracion;
+   si aparece en el desplegable junto al boton de ejecutar, basta con
+   seleccionarlo.)
+
+5. Presionar F5. Se abren dos pestanas del navegador:
+
+       https://localhost:7185/swagger .... la API
+       https://localhost:7240 ............ la aplicacion Blazor
+
+   En la aplicacion Blazor, entrar a Clientes en el menu lateral y
+   probar crear, listar, editar y eliminar.
+
+
+CADENA DE CONEXION
+------------------------------------------------------------------------
+Definida en TiendaOnline.API/appsettings.json y apuntando a LocalDB:
+
+    Server=(localdb)\MSSQLLocalDB;Database=TiendaOnlineDb;
+    Trusted_Connection=True;TrustServerCertificate=True;
+
+Para usar SQL Server Express, cambiar el servidor por:
+
+    localhost\SQLEXPRESS
+
+
+PUERTOS
+------------------------------------------------------------------------
+API  ... https://localhost:7185  (definido en su launchSettings.json)
+WASM ... https://localhost:7240
+
+El puerto de la API tambien esta escrito en el BaseAddress del
+HttpClient, en TiendaOnline.WASM/Program.cs. Si se cambia el puerto de
+la API, hay que cambiarlo tambien alli.
+
+
+DIFERENCIAS RESPECTO AL MANUAL
+------------------------------------------------------------------------
+Se documentan los puntos donde el codigo entregado no es identico al
+del manual, con su justificacion tecnica:
+
+1. El proyecto usa .NET 10 en lugar de .NET 8, porque es el SDK
+   disponible en el equipo de desarrollo.
+
+2. Se instalo el paquete Swashbuckle.AspNetCore en TiendaOnline.API.
+   Desde .NET 9 la plantilla de Web API ya no incluye Swagger, asi que
+   hubo que agregarlo para conservar la interfaz de pruebas descrita en
+   el Paso 9 de la Parte 1.
+
+3. Se retiro la linea AddEndpointsApiExplorer() de Program.cs. Solo es
+   necesaria para Minimal APIs; este proyecto usa controladores.
+
+4. En el modelo Cliente de la API se agrego el atributo [Key] sobre la
+   propiedad IdCliente. Entity Framework Core reconoce la clave
+   primaria por convencion unicamente si la propiedad se llama Id o
+   ClienteId. Con el nombre IdCliente la convencion no aplica y el
+   comando Add-Migration falla con el error:
+
+       The entity type 'Cliente' requires a primary key to be defined.
+
+   El atributo [Key] declara la clave de forma explicita. La tabla
+   resultante es identica a la descrita en el manual: columna IdCliente
+   como clave primaria con identidad (autoincremento).
+
+5. En el modelo Cliente del proyecto WASM se agregaron las anotaciones
+   [Required], [MaxLength] y [EmailAddress], equivalentes a las de la
+   entidad de la API. Sin ellas el componente DataAnnotationsValidator
+   del formulario no tiene reglas que validar y un envio vacio se
+   rechaza en el servidor sin mostrar mensaje en pantalla.
+
+6. Del proyecto WASM se retiro unicamente la pagina de ejemplo
+   Weather. Esa pagina descarga un archivo local usando el mismo
+   HttpClient, que aqui tiene como BaseAddress la direccion de la API,
+   por lo que la peticion terminaria fallando. Se conservan Home y
+   Counter tal como las genera la plantilla.
+
+7. Bootstrap esta incluido dentro del proyecto, en
+   wwwroot/lib/bootstrap/, igual que en la plantilla original. La
+   aplicacion no necesita conexion a internet para verse
+   correctamente.
+
+
+NOTA SOBRE .NET 10 Y VISUAL STUDIO
+------------------------------------------------------------------------
+.NET 10 requiere Visual Studio 2026. Al abrir la solucion con Visual
+Studio 2022 aparece el error:
+
+    NETSDK1233 - Targeting .NET 10.0 or higher in Visual Studio 2022
+    is not supported.
+
+Si se necesita ejecutar sobre Visual Studio 2022, hay que cambiar
+net10.0 por net8.0 en los dos archivos .csproj y bajar los paquetes de
+Entity Framework y de Blazor WebAssembly a su version 8.x
+correspondiente.
